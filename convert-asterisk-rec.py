@@ -38,7 +38,6 @@ def main(records_dir: str, remote_dir: str):
 
 if __name__ == '__main__':
     main(RECORDS_DIR, REMOTE_DIR)
-    ftp = MyFTP(remotefolder, '10.11.178.88', 'ftpuser', 'Secret!')
     ftp.login()
 
     for eachfile in files:
