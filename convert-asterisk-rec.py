@@ -2,16 +2,11 @@ import os
 from ftplib import FTP
 import pysftp
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
-
-RECORDS_DIR = os.getenv('RECORDS_DIR')
-REMOTE_DIR = os.getenv('REMOTE_DIR')
-BACKUP_SERVER = os.getenv('BACKUP_SERVER')
-LOGIN = os.getenv('BS_LOGIN')
-PASSWORD = os.getenv('BS_PASS')
 
 class MyFTP(FTP):
     def __init__(self, path, *args, **kwargs):
@@ -26,24 +21,28 @@ class MyFTP(FTP):
             with open(file, 'rb') as fobj:
                 self.storbinary('STOR' + file, fobj, 1024)
 
-def convert(files_list: list):
-    for eachfile in files_list:
-        mp3file = str(eachfile.split('.')[0]) + str('.mp3')
-        # convert .wav file to .mp3
-        os.system(f'ffmpeg -i {eachfile} {mp3file} -hide_banner')
 
-def main(records_dir: str, remote_dir: str):
-    os.chdir(records_dir)
-    files = os.listdir(path='.')
+
+def main():
+    os.chdir(RECORDS_DIR)
+    files_list = os.listdir(path='.')
+    with pysftp.Connection(host=BACKUP_SERVER, username=LOGIN, password=PASSWORD) as sftp:
+        sftp.cwd(REMOTE_DIR)
+
+        for eachfile in files_list:
+            mp3file = str(eachfile.split('.')[0]) + str('.mp3')
+            # convert .wav file to .mp3
+            os.system(f'ffmpeg -i {eachfile} -vn -ar 44100 -ac 2 -ab 192k -f mp3 {mp3file}')
+
+            sftp.put(eachfile, mp3file)
+
 
 if __name__ == '__main__':
-    main(RECORDS_DIR, REMOTE_DIR)
-    ftp.login()
 
-    for eachfile in files:
-        mp3file = str(eachfile.split('.')[0]) + str('.mp3')
-        # convert .wav file to .mp3
-        os.system(f'ffmpeg -i {eachfile} {mp3file} -hide_banner')
-        ftp.upload(mp3file)
-        os.remove(mp3file)
+    RECORDS_DIR = os.getenv('RECORDS_DIR')
+    REMOTE_DIR = os.getenv('REMOTE_DIR')
+    BACKUP_SERVER = os.getenv('BACKUP_SERVER')
+    LOGIN = os.getenv('BS_LOGIN')
+    PASSWORD = os.getenv('BS_PASS')
 
+    main()
