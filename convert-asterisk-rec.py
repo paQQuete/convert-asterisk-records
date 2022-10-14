@@ -1,5 +1,4 @@
 import os
-from ftplib import FTP
 import pysftp
 from dotenv import load_dotenv
 from pathlib import Path
